@@ -47,3 +47,6 @@ class GamePlayer:
         success_rate = np.mean(all_results)
         print(f'success rate is {success_rate}')
         return success_rate
+
+    def set_policy(self, policy):
+        self.policy = policy
