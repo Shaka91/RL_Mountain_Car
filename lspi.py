@@ -8,9 +8,63 @@ from linear_policy import LinearPolicy
 from game_player import GamePlayer
 
 
+def evaluation_criterion(evaluator):
+    samples_to_collect = 50
+    number_of_games = 1
+    max_steps_per_game = 1000
+    success_rate = np.zeros((samples_to_collect))
+    for i in range(samples_to_collect):
+        state = evaluator.env.reset()
+        all_results = [evaluator.play_game(max_steps_per_game, exploration_probability=0.0,
+                                           render=False, start_state=[state[0], state[1]]) for _ in range(number_of_games)]
+        success_rate[i] = np.mean(all_results)
+        # evaluator.play_game(max_steps_per_game, exploration_probability=0.0, render=False,
+        #                     start_state=[state[0], state[1]])
+    return np.mean(success_rate)
+
+
+def features_tile(encoded_state, action):
+    d = encoded_state.shape[0]
+    A = 3
+    encoded_state_action = np.zeros((d*A))
+    encoded_state_with_bias = np.zeros((d))
+    # encoded_state_with_bias[-1] = 1
+    # encoded_state_with_bias[:-1] = encoded_state
+    encoded_state_action[action * d:(action + 1) * d] = encoded_state
+    return encoded_state_action
+
+
 def compute_lspi_iteration(encoded_states, encoded_next_states, actions, rewards, done_flags, linear_policy, gamma):
-    # compute the next w given the data.
-    assert False, "implement compute_lspi_iteration function"
+    next_states_actions = linear_policy.get_max_action(encoded_next_states)
+    if linear_policy.include_bias:
+        number_of_states = len(encoded_states)
+        encoded_states = np.concatenate((encoded_states, np.ones((number_of_states, 1), np.float64)), axis=1)
+        encoded_next_states = np.concatenate((encoded_next_states, np.ones((number_of_states, 1), np.float64)), axis=1)
+    samples_num = encoded_states.shape[0]
+    d = encoded_states.shape[1]
+    A1 = np.zeros((3*d, 3*d))
+    A2 = np.zeros((3*d, 3*d))
+    b = np.zeros((3*d))
+    for i in range(samples_num):
+        phi_s = encoded_states[i, :]
+        phi_sPrime = encoded_next_states[i, :]
+        a = actions[i]
+        r = rewards[i]
+        phi_s_a = features_tile(phi_s, a) # size of 3d
+        aPrime = next_states_actions[i]
+        if not done_flags[i]:
+            aPrime = next_states_actions[i]
+        else:
+            aPrime = 1
+        phi_sPrime_a = features_tile(phi_sPrime, aPrime)
+        # A1 += phi_s_a @ phi_sPrime_a.T
+        # A2 += phi_s_a @ phi_s_a.T
+        A1 += np.outer(phi_s_a,phi_sPrime_a)
+        A2 += np.outer(phi_s_a,phi_s_a)
+        b += r * phi_s_a
+    A = gamma * A1 - A2
+    next_w = np.linalg.inv(-A) @ b
+    next_w = np.expand_dims(next_w, axis=1)
     return next_w
 
 
