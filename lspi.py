@@ -8,19 +8,6 @@ from linear_policy import LinearPolicy
 from game_player import GamePlayer
 
 
-def evaluation_criterion(evaluator):
-    samples_to_collect = 50
-    max_steps_per_game = 1000
-    sum = 0
-    for i in range(samples_to_collect):
-        state = evaluator.env.reset()
-        done = float(evaluator.play_game(max_steps_per_game, exploration_probability=0.0, render=False,
-                                          start_state=[state[0], state[1]]))
-        sum += done
-    success_rate = sum / samples_to_collect
-    return success_rate
-
-
 def features_tile(encoded_state, action):
     d = encoded_state.shape[0]
     A = 3

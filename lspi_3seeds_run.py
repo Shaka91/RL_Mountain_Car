@@ -6,9 +6,24 @@ from data_transformer import DataTransformer
 from radial_basis_function_extractor import RadialBasisFunctionExtractor
 from linear_policy import LinearPolicy
 from game_player import GamePlayer
-from lspi import compute_lspi_iteration, evaluation_criterion
+from lspi import compute_lspi_iteration
 import matplotlib.pyplot as plt
 import time
+
+
+def evaluation_criterion(evaluator, seeds):
+    samples_to_collect = 50
+    max_steps_per_game = 1000
+    success_rate = np.zeros(3)
+    for i in range(len(seeds)):
+        seed = seeds[i]
+        evaluator.env.seed(seed)
+        sum = 0
+        for j in range(samples_to_collect):
+            done = float(evaluator.play_game(max_steps_per_game, render=False))
+            sum += done
+        success_rate[i] = sum / samples_to_collect
+    return np.mean(success_rate)
 
 if __name__ == '__main__':
     samples_to_collect = 100000
@@ -20,7 +35,7 @@ if __name__ == '__main__':
     evaluation_number_of_games = 10
     evaluation_max_steps_per_game = 1000
 
-    np.random.seed(18702435)
+    np.random.seed(4)
 
     env = MountainCarWithResetEnv()
     # collect data
@@ -45,30 +60,23 @@ if __name__ == '__main__':
     # start an object that evaluates the success rate over time
     evaluator = GamePlayer(env, data_transformer, feature_extractor, linear_policy)
     c=0
-    seeds = [123, 321, 234]
-    this_iter_success_rate = np.zeros(w_updates)
-    for lspi_iteration in range(w_updates):
+    seeds = [1, 2, 3]
+    this_iter_success_rate = np.zeros(w_updates + 1)
+    this_iter_success_rate[0] = evaluation_criterion(evaluator, seeds)
+    for lspi_iteration in range(1, w_updates + 1):
         print(f'starting lspi iteration {lspi_iteration}')
 
         new_w = compute_lspi_iteration(
             encoded_states, encoded_next_states, actions, rewards, done_flags, linear_policy, gamma
         )
         norm_diff = linear_policy.set_w(new_w)
-        # evaluator.set_policy(linear_policy) - not needed as linear_policy is set inside evaluator automatically
-        success_rate_array_per_seed = np.zeros(3)
-        for i in range(3):
-            seed = seeds[i]
-            np.random.seed(seed)
-            t = time.time()
-            success_rate_array_per_seed[i] = evaluation_criterion(evaluator)
-            elapsed = time.time() - t
-            print(f'evaluation took {elapsed} for iter {lspi_iteration}')
-        this_iter_success_rate[lspi_iteration] = np.mean(success_rate_array_per_seed)
+        # this_iter_success_rate[lspi_iteration] = np.mean(success_rate_array_per_seed)
+        this_iter_success_rate[lspi_iteration] = evaluation_criterion(evaluator, seeds)
         if norm_diff < 0.00001:
             break
     print('done lspi')
     fig, ax = plt.subplots()
-    ax.plot(range(1, w_updates + 1), this_iter_success_rate)
+    ax.plot(range(w_updates + 1), this_iter_success_rate)
     plt.show()
     # evaluator.play_games(evaluation_number_of_games, evaluation_max_steps_per_game)
     # evaluator.play_game(evaluation_max_steps_per_game, render=True)
