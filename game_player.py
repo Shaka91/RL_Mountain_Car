@@ -48,5 +48,6 @@ class GamePlayer:
         print(f'success rate is {success_rate}')
         return success_rate
 
-    def set_policy(self, policy):
-        self.policy = policy
+    # not needed as linear_policy is set inside evaluator automatically
+    # def set_policy(self, policy):
+    #     self.policy = policy

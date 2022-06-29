@@ -10,17 +10,15 @@ from game_player import GamePlayer
 
 def evaluation_criterion(evaluator):
     samples_to_collect = 50
-    number_of_games = 1
     max_steps_per_game = 1000
-    success_rate = np.zeros((samples_to_collect))
+    sum = 0
     for i in range(samples_to_collect):
         state = evaluator.env.reset()
-        all_results = [evaluator.play_game(max_steps_per_game, exploration_probability=0.0,
-                                           render=False, start_state=[state[0], state[1]]) for _ in range(number_of_games)]
-        success_rate[i] = np.mean(all_results)
-        # evaluator.play_game(max_steps_per_game, exploration_probability=0.0, render=False,
-        #                     start_state=[state[0], state[1]])
-    return np.mean(success_rate)
+        done = float(evaluator.play_game(max_steps_per_game, exploration_probability=0.0, render=False,
+                                          start_state=[state[0], state[1]]))
+        sum += done
+    success_rate = sum / samples_to_collect
+    return success_rate
 
 
 def features_tile(encoded_state, action):
