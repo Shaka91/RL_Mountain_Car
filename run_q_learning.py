@@ -22,8 +22,8 @@ if __name__ == "__main__":
     np.random.seed(seed)
     env.seed(seed)
 
-    gamma = 0.99
-    learning_rate = 0.01
+    gamma = 0.999
+    learning_rate = 0.05
     epsilon_current = 0.1
     epsilon_decrease = 1.
     epsilon_min = 0.05
@@ -60,8 +60,8 @@ if __name__ == "__main__":
             avg_bellman_err_for_plot.append(mean_delta)
 
             # reduce epsilon if required
-            epsilon_current *= epsilon_decrease
-            epsilon_current = max(epsilon_current, epsilon_min)
+            # epsilon_current *= epsilon_decrease
+            # epsilon_current = max(epsilon_current, epsilon_min)
 
             print(f'after {episode_index}, reward = {episode_gain}, epsilon {epsilon_current}, average error {mean_delta}')
 
@@ -97,22 +97,22 @@ if __name__ == "__main__":
     axs1[0, 0].plot(X1, Reward1)
     axs1[0, 0].set_xlabel('Episode')
     axs1[0, 0].set_ylabel('Reward')
-    axs1[0, 0].title('Total reward gained as function of episode number')
+    axs1[0, 0].set_title('Total reward gained as function of episode number')
 
     axs1[0, 1].plot(X1, SR1)
     axs1[0, 1].set_xlabel('Episode')
     axs1[0, 1].set_ylabel('Success Rate')
-    axs1[0, 1].title('Success rate of the greedy policy as function of episode number')
+    axs1[0, 1].set_title('Success rate of the greedy policy as function of episode number')
 
     axs1[1, 0].plot(X1, InitStateV1)
     axs1[1, 0].set_xlabel('Episode')
     axs1[1, 0].set_ylabel('V(S0)')
-    axs1[1, 0].title('The initial state value as function of episode number')
+    axs1[1, 0].set_title('The initial state value as function of episode number')
 
     axs1[1, 1].plot(X1, BellmanErr1)
     axs1[1, 1].set_xlabel('Episode')
     axs1[1, 1].set_ylabel('Bellman Error')
-    axs1[1, 1].title('Average Bellman error as function of episode number')
+    axs1[1, 1].set_title('Average Bellman error as function of episode number')
 
 
     # run_episode(env, solver, is_train=False, render=True)

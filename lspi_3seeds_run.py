@@ -27,7 +27,7 @@ if __name__ == '__main__':
     number_of_kernels_per_dim = [12, 10]
     success_rate = np.zeros(3)
     gamma = 0.99
-    w_updates = 1
+    w_updates = 10
     evaluation_number_of_games = 10
     evaluation_max_steps_per_game = 1000
     seeds = [123, 321, 234]
@@ -68,15 +68,15 @@ if __name__ == '__main__':
             norm_diff = linear_policy.set_w(new_w)
             # this_iter_success_rate[lspi_iteration] = np.mean(success_rate_array_per_seed)
             this_iter_success_rate[i, lspi_iteration] = evaluation_criterion(evaluator)
-            if norm_diff < 0.00001:
-                break
+            # if norm_diff < 0.00001:
+            #     break
         print(f'done lspi for seed {seed}')
 
     fig, ax = plt.subplots()
-    ax.plot(range(w_updates + 1), np.mean(this_iter_success_rate, axis=1))
+    ax.plot(np.array(range(0, w_updates + 1)), np.mean(this_iter_success_rate, axis=0))
     ax.set_ylabel('Success Rate')
     ax.set_xlabel('Iteration #')
-    ax.title('Success rate as function of iterations number')
+    ax.set_title('Success rate as function of iterations number')
     plt.show()
     # evaluator.play_games(evaluation_number_of_games, evaluation_max_steps_per_game)
     # evaluator.play_game(evaluation_max_steps_per_game, render=True)

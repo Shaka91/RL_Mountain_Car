@@ -15,7 +15,7 @@ if __name__ == '__main__':
     samples_to_collect = samples_to_collect*10000
     number_of_kernels_per_dim = [12, 10]
     gamma = 0.9999
-    w_updates = 100
+    w_updates = 10
     evaluation_number_of_games = 10
     evaluation_max_steps_per_game = 200
     np.random.seed(123)
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     ax.plot(samples_to_collect, this_iter_success_rate)
     ax.set_ylabel('Success Rate')
     ax.set_xlabel('Samples #')
-    ax.title('Success indicator as function of samples number')
+    ax.set_title('Success indicator as function of samples number')
     plt.show()
     # evaluator.play_games(evaluation_number_of_games, evaluation_max_steps_per_game)
     # evaluator.play_game(evaluation_max_steps_per_game, render=True)

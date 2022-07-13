@@ -40,12 +40,12 @@ class Solver:
     def get_all_q_vals(self, features):
         all_vals = np.zeros(self._actions)
         for a in range(self._actions):
-            all_vals[a] = solver.get_q_val(features, a)
+            all_vals[a] = self.get_q_val(features, a)
         return all_vals
 
     def get_max_action(self, state):
-        sparse_features = solver.get_features(state)
-        q_vals = solver.get_all_q_vals(sparse_features)
+        sparse_features = self.get_features(state)
+        q_vals = self.get_all_q_vals(sparse_features)
         return np.argmax(q_vals)
 
     def get_state_action_features(self, state, action):
@@ -62,7 +62,8 @@ class Solver:
 
         Q_s_a = self.get_q_val(phi_s, action)
         if done:
-            a_prime = 1
+            # a_prime = 1
+            return 0
         else:
             a_prime = self.get_max_action(next_state)
         phi_s_prime_a_prime = self.get_state_action_features(next_state, a_prime)
@@ -76,7 +77,7 @@ class Solver:
 
 def modify_reward(reward):
     reward -= 1
-    if reward == 1.:
+    if reward == 0:
         reward = 100.
     return reward
 
@@ -103,8 +104,8 @@ def run_episode(env, solver, is_train=True, epsilon=None, max_steps=200, render=
         if render:
             env.render()
             time.sleep(0.1)
-        next_state, reward, done, _ = env.step(action)
-        reward = modify_reward(reward)
+        next_state, reward1, done, _ = env.step(action)
+        reward = modify_reward(reward1)
         step += 1
         episode_gain += reward
         if is_train:
