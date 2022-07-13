@@ -35,7 +35,7 @@ def compute_lspi_iteration(encoded_states, encoded_next_states, actions, rewards
         phi_sPrime = encoded_next_states[i, :]
         a = actions[i]
         r = rewards[i]
-        phi_s_a = features_tile(phi_s, a) # size of 3d
+        phi_s_a = features_tile(phi_s, a)  # size of 3*d
         aPrime = next_states_actions[i]
         if not done_flags[i]:
             aPrime = next_states_actions[i]
@@ -54,11 +54,11 @@ def compute_lspi_iteration(encoded_states, encoded_next_states, actions, rewards
 
 
 if __name__ == '__main__':
-    samples_to_collect = 100000
+    samples_to_collect = 90000
     # samples_to_collect = 150000
     # samples_to_collect = 10000
     number_of_kernels_per_dim = [12, 10]
-    gamma = 0.99
+    gamma = 0.999
     w_updates = 100
     evaluation_number_of_games = 10
     evaluation_max_steps_per_game = 1000

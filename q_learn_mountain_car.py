@@ -56,13 +56,27 @@ class Solver:
 
     def update_theta(self, state, action, reward, next_state, done):
         # compute the new weights and set in self.theta. also return the bellman error (for tracking).
-        assert False, "implement update_theta"
-        return 0.0
+        alpha = self.learning_rate
+        phi_s = self.get_features(state)
+        phi_s_prime = self.get_features(next_state)
+
+        Q_s_a = self.get_q_val(phi_s, action)
+        if done:
+            a_prime = 1
+        else:
+            a_prime = self.get_max_action(next_state)
+        phi_s_prime_a_prime = self.get_state_action_features(next_state, a_prime)
+        Q_s_a_estimated = reward + self.gamma * self.get_q_val(phi_s_prime, a_prime)
+        bellman_error = Q_s_a_estimated - Q_s_a
+        gradient = phi_s_prime_a_prime
+        theta = self.theta + alpha * bellman_error * gradient
+        self.theta = theta
+        return bellman_error
 
 
 def modify_reward(reward):
     reward -= 1
-    if reward == 0.:
+    if reward == 1.:
         reward = 100.
     return reward
 
