@@ -23,17 +23,16 @@ if __name__ == "__main__":
     epsilon_min = 0.05
 
     max_episodes = 10000
-
-    solver = Solver(
-        # learning parameters
-        gamma=gamma, learning_rate=learning_rate,
-        # feature extraction parameters
-        number_of_kernels_per_dim=[7, 5],
-        # env dependencies (DO NOT CHANGE):
-        number_of_actions=env.action_space.n,
-    )
     seeds = [123, 321, 234]
     for i in range(len(seeds)):
+        solver = Solver(
+            # learning parameters
+            gamma=gamma, learning_rate=learning_rate,
+            # feature extraction parameters
+            number_of_kernels_per_dim=[7, 5],
+            # env dependencies (DO NOT CHANGE):
+            number_of_actions=env.action_space.n,
+        )
         seed = seeds[i]
         env.seed(seed)
         reward_for_plot = []
@@ -65,7 +64,6 @@ if __name__ == "__main__":
                 if SR_for_plot[-1] >= -75.:
                     print(f'solved in {episode_index} episodes')
                     break
-
         if i == 1:
             Reward1 = np.array(reward_for_plot)
             SR1 = np.array(SR_for_plot)
