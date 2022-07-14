@@ -62,8 +62,8 @@ class Solver:
 
         Q_s_a = self.get_q_val(phi_s, action)
         if done:
-            # a_prime = 1
-            return 0
+            a_prime = 1
+            # return 0
         else:
             a_prime = self.get_max_action(next_state)
         phi_s_prime_a_prime = self.get_state_action_features(next_state, a_prime)
@@ -156,6 +156,7 @@ if __name__ == "__main__":
             print(f'tested 10 episodes: mean gain is {mean_test_gain}')
             if mean_test_gain >= -75.:
                 print(f'solved in {episode_index} episodes')
+                run_episode(env, solver, is_train=False, render=True)
                 break
 
     run_episode(env, solver, is_train=False, render=True)

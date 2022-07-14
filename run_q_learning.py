@@ -16,12 +16,6 @@ def evaluate_criterion(env, solver):
 
 if __name__ == "__main__":
     env = MountainCarWithResetEnv()
-    seed = 123
-    # seed = 234
-    # seed = 345
-    np.random.seed(seed)
-    env.seed(seed)
-
     gamma = 0.999
     learning_rate = 0.05
     epsilon_current = 0.1
