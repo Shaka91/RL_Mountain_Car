@@ -63,6 +63,7 @@ if __name__ == "__main__":
                 print(f'tested 10 episodes: mean gain is {SR_for_plot[-1]}')
                 if SR_for_plot[-1] >= -75.:
                     print(f'solved in {episode_index} episodes')
+                    run_episode(env, solver, is_train=False, render=True)
                     break
         if i == 1:
             Reward1 = np.array(reward_for_plot)
