@@ -62,8 +62,9 @@ class Solver:
 
         Q_s_a = self.get_q_val(phi_s, action)
         if done:
-            a_prime = 1
+            # a_prime = 1
             # return 0
+            # Q_s_a_estimated = reward
         else:
             a_prime = self.get_max_action(next_state)
         phi_s_prime_a_prime = self.get_state_action_features(next_state, a_prime)
