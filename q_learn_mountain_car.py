@@ -5,6 +5,16 @@ from data_transformer import DataTransformer
 from mountain_car_with_data_collection import MountainCarWithResetEnv
 from radial_basis_function_extractor import RadialBasisFunctionExtractor
 
+def moving_average(x, w):
+    return np.convolve(x, np.ones(w), 'valid') / w
+
+def evaluate_criterion(env, solver):
+    num_of_states = 10
+    test_gains = [run_episode(env, solver, is_train=False, epsilon=None)[0] for _ in range(num_of_states)]
+    successes = test_gains[test_gains != -200]
+    SR = np.sum(successes) / num_of_states
+    mean_test_gain = np.mean(test_gains)
+    return mean_test_gain, SR
 
 class Solver:
     def __init__(self, number_of_kernels_per_dim, number_of_actions, gamma, learning_rate):
@@ -59,18 +69,17 @@ class Solver:
         alpha = self.learning_rate
         phi_s = self.get_features(state)
         phi_s_prime = self.get_features(next_state)
-
         Q_s_a = self.get_q_val(phi_s, action)
+        # a_prime = self.get_max_action(next_state)
+        # phi_s_prime_a_prime = self.get_state_action_features(next_state, a_prime)
+        phi_s_a = self.get_state_action_features(state, action)
         if done:
-            a_prime = 1
-            # return 0
-            # Q_s_a_estimated = reward
+            Q_s_a_estimated = reward  # done means s_prime is terminal state thus Q=100
         else:
             a_prime = self.get_max_action(next_state)
-        phi_s_prime_a_prime = self.get_state_action_features(next_state, a_prime)
-        Q_s_a_estimated = reward + self.gamma * self.get_q_val(phi_s_prime, a_prime)
+            Q_s_a_estimated = reward + self.gamma * self.get_q_val(phi_s_prime, a_prime)
         bellman_error = Q_s_a_estimated - Q_s_a
-        gradient = phi_s_prime_a_prime
+        gradient = phi_s_a
         theta = self.theta + alpha * bellman_error * gradient
         self.theta = theta
         return bellman_error
@@ -118,14 +127,14 @@ def run_episode(env, solver, is_train=True, epsilon=None, max_steps=200, render=
 
 if __name__ == "__main__":
     env = MountainCarWithResetEnv()
-    seed = 123
+    # seed = 123
     # seed = 234
-    # seed = 345
+    seed = 345
     np.random.seed(seed)
     env.seed(seed)
 
-    gamma = 0.99
-    learning_rate = 0.01
+    gamma = 0.999
+    learning_rate = 0.05
     epsilon_current = 0.1
     epsilon_decrease = 1.
     epsilon_min = 0.05
@@ -140,7 +149,10 @@ if __name__ == "__main__":
         # env dependencies (DO NOT CHANGE):
         number_of_actions=env.action_space.n,
     )
-
+    reward_for_plot = []
+    SR_for_plot = []
+    initial_state_value_for_plot = []
+    avg_bellman_err_for_plot = []
     for episode_index in range(1, max_episodes + 1):
         episode_gain, mean_delta = run_episode(env, solver, is_train=True, epsilon=epsilon_current)
 
@@ -149,15 +161,35 @@ if __name__ == "__main__":
         epsilon_current = max(epsilon_current, epsilon_min)
 
         print(f'after {episode_index}, reward = {episode_gain}, epsilon {epsilon_current}, average error {mean_delta}')
+        # evaluation
+        # saving data
+        reward_for_plot.append(episode_gain)
+        s0 = [-0.5, 0]
+        phi_s0 = solver.get_features(s0)
+        s0_greedy_action = solver.get_max_action(s0)
+        initial_state_value_for_plot.append(solver.get_q_val(phi_s0, s0_greedy_action))
+        avg_bellman_err_for_plot.append(mean_delta)
 
         # termination condition:
         if episode_index % 10 == 9:
             test_gains = [run_episode(env, solver, is_train=False, epsilon=0.)[0] for _ in range(10)]
             mean_test_gain = np.mean(test_gains)
+            failures = np.sum(test_gains.count(-200))
+            successes = 10 - failures
+            SR = np.sum(successes) / 10
+            SR_for_plot.append(SR)
             print(f'tested 10 episodes: mean gain is {mean_test_gain}')
             if mean_test_gain >= -75.:
                 print(f'solved in {episode_index} episodes')
                 run_episode(env, solver, is_train=False, render=True)
                 break
 
+    Reward = np.array(reward_for_plot)
+    SR = np.array(SR_for_plot)
+    InitStateV = np.array(initial_state_value_for_plot)
+    BellmanErr = np.array(avg_bellman_err_for_plot)
+    BellmanErr_avged = moving_average(BellmanErr, 100)
+    X1 = range(0, len(InitStateV))
+    np.savez('seed345', Reward=Reward, SR=SR, InitStateV=InitStateV, BellmanErr=BellmanErr_avged, X1=X1)
+    # np.savez('seed123',InitStateV=InitStateV, BellmanErr=BellmanErr_avged, X1=X1)
     run_episode(env, solver, is_train=False, render=True)

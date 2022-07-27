@@ -4,26 +4,19 @@ import matplotlib.pyplot as plt
 from data_transformer import DataTransformer
 from mountain_car_with_data_collection import MountainCarWithResetEnv
 from radial_basis_function_extractor import RadialBasisFunctionExtractor
-from q_learn_mountain_car import Solver, run_episode
-
-
-def evaluate_criterion(env, solver):
-    num_of_states = 10
-    test_gains = [run_episode(env, solver, is_train=False, epsilon=None)[0] for _ in range(num_of_states)]
-    mean_test_gain = np.mean(test_gains)
-    return mean_test_gain
+from q_learn_mountain_car import Solver, run_episode, moving_average, evaluate_criterion
 
 
 if __name__ == "__main__":
     env = MountainCarWithResetEnv()
     gamma = 0.999
-    learning_rate = 0.05
+    learning_rate = 0.01
     epsilon_current = 0.1
     epsilon_decrease = 1.
     epsilon_min = 0.05
 
     max_episodes = 10000
-    seeds = [123, 321, 234]
+    seeds = [123, 234, 345]
     for i in range(len(seeds)):
         solver = Solver(
             # learning parameters
@@ -41,30 +34,36 @@ if __name__ == "__main__":
         avg_bellman_err_for_plot = []
         for episode_index in range(1, max_episodes + 1):
             episode_gain, mean_delta = run_episode(env, solver, is_train=True, epsilon=epsilon_current)
+
+            # reduce epsilon if required
+            epsilon_current *= epsilon_decrease
+            epsilon_current = max(epsilon_current, epsilon_min)
+
+            print(
+                f'after {episode_index}, reward = {episode_gain}, epsilon {epsilon_current}, average error {mean_delta}')
+            # evaluation
             # saving data
             reward_for_plot.append(episode_gain)
-            SR_for_plot.append(evaluate_criterion(env, solver))
-
-            s0 = env.reset_specific(-0.5, 0)
+            s0 = [-0.5, 0]
             phi_s0 = solver.get_features(s0)
             s0_greedy_action = solver.get_max_action(s0)
             initial_state_value_for_plot.append(solver.get_q_val(phi_s0, s0_greedy_action))
-
             avg_bellman_err_for_plot.append(mean_delta)
-
-            # reduce epsilon if required
-            # epsilon_current *= epsilon_decrease
-            # epsilon_current = max(epsilon_current, epsilon_min)
-
-            print(f'after {episode_index}, reward = {episode_gain}, epsilon {epsilon_current}, average error {mean_delta}')
 
             # termination condition:
             if episode_index % 10 == 9:
-                print(f'tested 10 episodes: mean gain is {SR_for_plot[-1]}')
-                if SR_for_plot[-1] >= -75.:
+                test_gains = [run_episode(env, solver, is_train=False, epsilon=0.)[0] for _ in range(10)]
+                mean_test_gain = np.mean(test_gains)
+                failures = np.sum(test_gains.count(-200))
+                successes = 10 - failures
+                SR = np.sum(successes) / 10
+                SR_for_plot.append(SR)
+                print(f'tested 10 episodes: mean gain is {mean_test_gain}')
+                if mean_test_gain >= -75.:
                     print(f'solved in {episode_index} episodes')
-                    # run_episode(env, solver, is_train=False, render=True)
+                    run_episode(env, solver, is_train=False, render=True)
                     break
+
         if i == 1:
             Reward1 = np.array(reward_for_plot)
             SR1 = np.array(SR_for_plot)
@@ -86,7 +85,7 @@ if __name__ == "__main__":
 
     # plotting the saved data
     # seed 1
-    fig1, axs1 = plt.subplots(2, 2, subplot_kw=dict(projection="polar"))
+    fig1, axs1 = plt.subplots(2, 2)
     axs1[0, 0].plot(X1, Reward1)
     axs1[0, 0].set_xlabel('Episode')
     axs1[0, 0].set_ylabel('Reward')
